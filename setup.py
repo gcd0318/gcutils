@@ -5,7 +5,7 @@ setup(
         version = '0.0.9',
         author = 'gcd0318',
         author_email = 'gcd0318@hotmail.com',
-        url = 'https://github.com/gcd0318/utils',
+        url = 'https://github.com/gcd0318/gcutils',
         description = 'gcutils',
         packages = ['gcutils'],
         install_requires = [],
