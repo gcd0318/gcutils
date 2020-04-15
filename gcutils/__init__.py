@@ -92,6 +92,43 @@ def value2list(value):
     value = value.strip()
     return [p.strip() for p in value[1:-1].split(',')]
 
+def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
+    res = None
+    from hashlib import sha512 as encrypt_func
+    if('md5' == encrypt):
+        from hashlib import md5 as encrypt_func
+    absfp = os.path.abspath(filepath)
+    if os.path.isfile(absfp):
+        m = encrypt_func()
+#        m.update(absfp.encode(UTF8))
+        with open(absfp, 'rb') as f:
+            b = f.read(enblock_size)
+            while(b):
+                m.update(b)
+                b = f.read(enblock_size)
+            res = m.hexdigest()
+    elif os.path.isdir(absfp):
+        absfp = pathize(absfp)
+        pathencrypt = encrypt_func()
+        pathencrypt.update(absfp.encode('utf-8'))
+        tmp_path = os.path.abspath('tmp')
+        if not os.path.exists(tmp_path):
+            os.makedirs(tmp_path)
+        path_encrypt = tmp_path + os.sep + pathencrypt.hexdigest()
+        with open(path_encrypt, 'w') as tmpf:
+#            print(absfp, path_md5, file=tmpf)
+            encrypt_d = {}
+            for filename in deep_scan(absfp):
+                if(filename != absfp):
+                    encrypt_d[filename.replace(absfp, '')] = get_encrypt(filename, encrypt=encrypt)
+            for k, v in sorted(encrypt_d.items(), key=lambda item:item[0]):
+                print(k, v, file=tmpf)
+#        print(path_encrypt, os.path.exists(path_encrypt))
+        res = get_encrypt(path_encrypt, encrypt=encrypt)
+        os.remove(path_encrypt)
+#    print('encrypt:', res)
+    return res
+
 if ('__main__' == __name__):
     val = '''
     {
@@ -108,4 +145,5 @@ offset: {offset}
 #    print(deep_scan('.', 'case', 'pycache'))
 #    print(read_config('/Users/guochen/work/prod/cars/dicomapi/cases/query_all_studies.cases'))
     val = '[1,2,3,4,5]'
-    print(value2list(val))
+#    print(value2list(val))
+    print(get_encrypt('.'))
