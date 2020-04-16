@@ -111,7 +111,7 @@ def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
         absfp = pathize(absfp)
         pathencrypt = encrypt_func()
         pathencrypt.update(absfp.encode('utf-8'))
-        tmp_path = os.path.abspath('tmp')
+        tmp_path = os.path.abspath('/tmp')
         if not os.path.exists(tmp_path):
             os.makedirs(tmp_path)
         path_encrypt = tmp_path + os.sep + pathencrypt.hexdigest()
