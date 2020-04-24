@@ -17,6 +17,7 @@ SHORT_s = 10
 SCRIPT_EXECUTE_TIMEOUT_s = 60
 
 RETRY = 10
+LOCALS = ('localhost', '127.0.0.1')
 
 def read_config(paramfile):
     resd = {}
@@ -409,7 +410,7 @@ def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no
     else:
         resd = remote_exec(cmd, machine, username, password, port, no_err=no_err, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
         resl = resd['res']
-        if (('err' in resd) and (0 != len(resd['err'])))and no_err and ((omit_str is None) or (not (omit_str in resd['res'][0]))):
+        if (resd.get('err')) and no_err and ((omit_str is None) or (not (omit_str in resd['res'][0]))):
             resl = resd['err']
         else:
             rtcode = 0
