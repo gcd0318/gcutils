@@ -1,14 +1,22 @@
-from const import UTF8, TIMEOUT_s, SHORT_s, RETRY, SCRIPT_EXECUTE_TIMEOUT_s
-
 import configparser
 import datetime
 import glob
 import os
+import paramiko
 import shutil
 import socket
 import stat
 import subprocess
 import time
+import traceback
+
+UTF8 = 'utf-8'
+
+TIMEOUT_s = 60
+SHORT_s = 10
+SCRIPT_EXECUTE_TIMEOUT_s = 60
+
+RETRY = 10
 
 def read_config(paramfile):
     resd = {}
@@ -22,20 +30,6 @@ def read_config(paramfile):
                 params[key] = section[key]
             resd[sect] = params
     return resd
-
-def get_func(f):
-    def _wrapper(*argc, **kwargs):
-        logger.info('running ' + f.__name__)
-        while True:
-            try:
-                f(*argc, **kwargs)
-            except Exception as err:
-                import traceback
-                logger.error(f.__name__)
-                logger.error(str(err))
-                logger.error(traceback.format_exc())
-            time.sleep(PERIOD_s)
-    return _wrapper
 
 def is_dir(path, sock=None, sftp=None):
     res = False
@@ -58,8 +52,7 @@ def is_dir(path, sock=None, sftp=None):
                 sftp = paramiko.SFTPClient.from_transport(t)
             res = stat.S_ISDIR(sftp.lstat(remote_path).st_mode)
         except Exception as err:
-            logger.error(__name__)
-            logger.error(err)
+            raise Exception(__name__, err)
     return res
 
 def timestamp(t=None, fmt='%Y%m%d_%H%M%S.%f'):
@@ -100,7 +93,7 @@ def deep_scan(root='.', key = '', skip=''):
         resl.append(root)
     return resl
 
-def deep_scan_remote(sftp, path=INCOMING):
+def deep_scan_remote(sftp, path):
     res = []
     if is_dir(path=path, sftp=sftp):
         if (not path.endswith(os.sep)):
@@ -123,11 +116,8 @@ def get_local_ip(port=80):
         try:
             s.connect((DNS[i], port))
             ip = s.getsockname()[0]
-        except Exception as err:
-            import traceback
-            logger.error(__name__)
-            logger.error(err)
-            logger.error(traceback.format_exc())
+        except Exception as err:  
+            raise Exception(__name__, err)
         finally:
             i = i + 1
             s.close()
@@ -241,11 +231,9 @@ def remote_cp(src, tgt):
     sftp = paramiko.SFTPClient.from_transport(t)
     res = None
     try:
-        logger.debug('copy from ' + src + ' to ' + tgt)
         src_root = ''
         tgt_root = ''
         local = os.path.abspath(local)
-        logger.debug('local file is as ' + local)
         if (local == src):
             tgt_path = remote_path
             if os.path.isdir(src):
@@ -307,14 +295,9 @@ def remote_cp(src, tgt):
                     os.mkdir(localpath)
                 if not(is_dir(sftp=sftp, path=fullpath)):
                     sftp.get(fullpath, localpath + filename)
-        logger.debug(src + ' is copied to ' + tgt)
         res = tgt + os.sep + src_root
     except Exception as err:
-        logger.error(__name__)
-        logger.error(err)
-        import traceback
-        logger.error(traceback.format_exc())
-        res = None
+        raise Exception(__name__, err)
     finally:
         t.close()
     return res
@@ -381,7 +364,6 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
                 try:
                     ssh.load_system_host_keys()
                     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                    logger.debug('try to connect to ' + ip + ' via ' + str(port) + ' with username: ' + username)
                     ssh.connect(hostname=ip, port=port, username=username, password=password)
                     if (cmd.split(';')[-1].replace('&', '').split('-')[0].strip() in (
                     'reboot', 'shutdown', 'poweroff')):
@@ -390,22 +372,17 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
                         stdin, stdout, stderr = ssh.exec_command(cmd, timeout=timeout)
                         resd['res'] = stdout.readlines()
                         resd['err'] = stderr.readlines()
-                        logger.debug(str(resd))
                         if ((0 == len(resd['err'])) or ((not no_err) and (0 < len(resd['res'])))):
                             resd.pop('err')
                         else:
                             rt = rt + 1
                 except Exception as err:
-                    import traceback
-                    logger.error(str(err))
-                    logger.error(traceback.format_exc())
                     resd['err'] = [str(err), traceback.format_exc()]
                     rt = rt + 1
                     time.sleep(short_wait)
+                    raise Exception(__name__, err)
                 finally:
                     ssh.close()
-                logger.debug(str(resd))
-                logger.debug(str(no_err))
             if (not 'err' in resd):
                 resd['err'] = []
         elif('windows' == platform):
@@ -415,55 +392,41 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
                     ret = winrm.Session('http://' + ip + ':' + str(port) + '/wsman', auth=(username, password)).run_cmd(cmd)
                     resd['res'], resd['err'] = ret.std_out, ret.std_err
                 except Exception as err:
-                    import traceback
-                    logger.error(str(err))
-                    logger.error(traceback.format_exc())
                     resd['err'] = [str(err), traceback.format_exc()]
                     rt = rt + 1
                     time.sleep(short_wait)
+                    raise Exception(__name__, err)
                 finally:
                     pass
     return resd
 
 
 def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux'):
-    logger.debug('run ' + cmd + ' on ' + machine + ' with no_err as ' + str(no_err))
     rtcode = -1
     resl = []
     if (machine in LOCALS):
-        logger.debug('run ' + cmd + ' on localhost')
         rtcode, resl = exec_local_cmd(cmd)
     else:
-        logger.debug('remote run ' + cmd + ' on ' + machine)
         resd = remote_exec(cmd, machine, username, password, port, no_err=no_err, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
-        logger.debug('rtcode of exec_cmd ' + cmd + ' is: ' + str(rtcode))
-        logger.debug('resd:\n' + str(resd))
         resl = resd['res']
-        logger.debug(str('err' in resd))
-        logger.debug(str(0 != len(resd['err'])))
-        logger.debug(str(not no_err))
-        logger.debug(omit_str)
         if (('err' in resd) and (0 != len(resd['err'])))and no_err and ((omit_str is None) or (not (omit_str in resd['res'][0]))):
             resl = resd['err']
         else:
             rtcode = 0
-    logger.debug(str(rtcode))
     return rtcode, resl
 
 
 def run_shell_cmd(cmd):
-    logger.info("run cmd: %s", cmd)
     try:
         rc = subprocess.call(cmd, shell=True)
         if rc != 0:
-            logger.error("Fail to run %s , rc: %s" % (cmd, rc))
-    except OSError as e:
-        logger.error("Fail to run cmd: %s" % e)
+            raise Exception(__name__, "Fail to run %s , rc: %s" % (cmd, rc))
+    except OSError as err:
+        raise Exception(__name__, err)
     return rc
 
 
 def exec_local_cmd(args, shell=True, with_blank=False):
-    logger.debug('run on localhost')
     resl = []
     try:
         process = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -482,9 +445,9 @@ def exec_local_cmd(args, shell=True, with_blank=False):
     return rtcode, resl
 
 
-def run_shell_script(args, shell=False, log=logger, timeout=SCRIPT_EXECUTE_TIMEOUT_s, return_output=False):
+def run_shell_script(args, shell=False, timeout=SCRIPT_EXECUTE_TIMEOUT_s, return_output=False):
     command = Command(args)
-    return command.run(log=log, shell=shell, timeout=timeout, return_output=return_output)
+    return command.run(shell=shell, timeout=timeout, return_output=return_output)
 
 
 class Command(object):
@@ -493,14 +456,12 @@ class Command(object):
         self.process = None
         self.error_message = None
 
-    def run(self, shell=False, log=logger, timeout=SCRIPT_EXECUTE_TIMEOUT_s, return_output=False):
+    def run(self, shell=False, timeout=SCRIPT_EXECUTE_TIMEOUT_s, return_output=False):
         try:
             def kill_process():
                 if self.process.poll() is None:
-                    log.error('Kill process')
                     self.process.kill()
                     self.error_message = "shell process killed by timeout, timeout=%s" % timeout
-                    log.error(self.error_message)
 
             self.process = subprocess.Popen(self.cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                             close_fds=True)
@@ -518,13 +479,11 @@ class Command(object):
                 line = nbsr.readline(0.1)  # 0.1 secs to let the shell output the result
                 if line:
                     shell_output += line
-                    log.info(line.rstrip())
 
             # When the subprocess terminates there might be unconsumed output that still needs to be processed.
             content = nbsr.readline(1)
             if content:
                 shell_output += content
-                log.info(content)
 
             # cancel timer
             t.cancel()
@@ -535,7 +494,6 @@ class Command(object):
                 return self.process.returncode, self.error_message
         except OSError as e:
             error_message = "Fail to run command: %s" % e
-            log.error(error_message)
             return e.errno, error_message
 
 
@@ -619,20 +577,5 @@ def execute(command, *args, **kwargs):
 
 
 if ('__main__' == __name__):
-    val = '''
-    {
-{attributeID}: {value}
-includefield: {includefield}
-fuzzymatch: {fuzzymatch}
-limit: {limit}
-offset: {offset}
-}'''
-    v2d = value2dict(val)
-    print(v2d)
-    print(type(v2d))
-#    print(scan('.', 'case', 'pycache'))
-#    print(deep_scan('.', 'case', 'pycache'))
-#    print(read_config('/Users/guochen/work/prod/cars/dicomapi/cases/query_all_studies.cases'))
-    val = '[1,2,3,4,5]'
-#    print(value2list(val))
-    print(get_encrypt('.'))
+    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
+    print(output)
