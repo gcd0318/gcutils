@@ -402,13 +402,13 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
     return resd
 
 
-def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux'):
+def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux', timeout=TIMEOUT_s):
     rtcode = -1
     resl = []
     if (machine in LOCALS):
         rtcode, resl = exec_local_cmd(cmd)
     else:
-        resd = remote_exec(cmd, machine, username, password, port, no_err=no_err, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
+        resd = remote_exec(cmd, machine, username, password, port, no_err=no_err, timeout=timeout, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
         resl = resd['res']
         if (resd.get('err')) and no_err and ((omit_str is None) or (not (omit_str in resd['res'][0]))):
             resl = resd['err']
