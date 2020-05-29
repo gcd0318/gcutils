@@ -575,8 +575,16 @@ def execute(command, *args, **kwargs):
     return ref['process'].returncode, ref['stdout'], ref['stderr']
 
 
+def file_count(path):
+    res = 0
+    for _, _, filenames in os.walk(os.path.abspath(path)):
+        for filename in filenames:
+            if os.path.isfile(filename):
+                res = res + 1
+    return res
 
 
 if ('__main__' == __name__):
-    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
-    print(output)
+    print(file_count('.'))
+#    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
+#    print(output)
