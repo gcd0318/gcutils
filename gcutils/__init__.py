@@ -402,7 +402,7 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
     return resd
 
 
-def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux', timeout=TIMEOUT_s):
+def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux', timeout=TIMEOUT_s, debug=False):
     rtcode = -1
     resl = []
     if (machine in LOCALS):
@@ -414,6 +414,9 @@ def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no
             resl = resd['err']
         else:
             rtcode = 0
+    if debug:
+        print(rtcode)
+        print(resl)
     return rtcode, resl
 
 
