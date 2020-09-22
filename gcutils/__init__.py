@@ -586,7 +586,7 @@ def file_count(path):
                 res = res + 1
     return res
 
-def latest_mtime(path):
+def latest(path):
     latest_mtime = -1
     latest_filename = None
     for _, _, filenames in os.walk(os.path.abspath(path)):

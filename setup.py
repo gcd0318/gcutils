@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
         name = 'gcutils',
-        version = '0.0.30',
+        version = '0.0.31',
         author = 'gcd0318',
         author_email = 'gcd0318@hotmail.com',
         url = 'https://github.com/gcd0318/gcutils',
