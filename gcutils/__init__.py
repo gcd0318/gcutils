@@ -586,6 +586,17 @@ def file_count(path):
                 res = res + 1
     return res
 
+def latest_mtime(path):
+    latest_mtime = -1
+    latest_filename = None
+    for _, _, filenames in os.walk(os.path.abspath(path)):
+        for filename in filenames:
+            if os.path.isfile(filename):
+                mtime = os.path.getmtime(filename)
+                if(latest < mtime):
+                    latest_mtime = mtime
+                    latest_filename = filename
+    return latest_filename, latest_mtime
 
 if ('__main__' == __name__):
     print(file_count('.'))
