@@ -599,7 +599,7 @@ def latest(path):
     return latest_filename, latest_mtime
 
 def idle(msg, mark, case_match=False):
-    m = ''
+    c = ''
     if not case_match:
         mark = mark.lower()
     while not(c == mark):
