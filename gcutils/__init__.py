@@ -598,10 +598,14 @@ def latest(path):
                     latest_filename = filename
     return latest_filename, latest_mtime
 
-def idle(msg, mark):
+def idle(msg, mark, case_match=False):
     m = ''
+    if not case_match:
+        mark = mark.lower()
     while not(c == mark):
-        input(msg)
+        c = input(msg)
+        if not case_match:
+            c = c.lower()
 
 
 if ('__main__' == __name__):
