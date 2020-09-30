@@ -598,6 +598,12 @@ def latest(path):
                     latest_filename = filename
     return latest_filename, latest_mtime
 
+def idle(msg, mark):
+    m = ''
+    while not(c == mark):
+        input(msg)
+
+
 if ('__main__' == __name__):
     print(file_count('.'))
 #    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
