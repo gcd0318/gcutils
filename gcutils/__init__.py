@@ -9,6 +9,7 @@ import stat
 import subprocess
 import time
 import traceback
+import random
 
 UTF8 = 'utf-8'
 
@@ -607,8 +608,12 @@ def idle(msg, mark, case_match=False):
         if not case_match:
             c = c.lower()
 
+def randstr(length=4):
+    return ''.join(random.sample(['z','y','x','w','v','u','t','s','r','q','p','o','n','m','l','k','j','i','h','g','f','e','d','c','b','a'], length))
+
 
 if ('__main__' == __name__):
-    print(file_count('.'))
+    print(randstr())
+    print(randstr(8))
 #    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
 #    print(output)
