@@ -6,6 +6,7 @@ import paramiko
 import shutil
 import socket
 import stat
+import string
 import subprocess
 import time
 import traceback
@@ -609,7 +610,7 @@ def idle(msg, mark, case_match=False):
             c = c.lower()
 
 def randstr(length=4):
-    return ''.join(random.sample(['z','y','x','w','v','u','t','s','r','q','p','o','n','m','l','k','j','i','h','g','f','e','d','c','b','a'], length))
+    return ''.join(random.sample(string.ascii_letters + string.digits, length))
 
 
 if ('__main__' == __name__):
