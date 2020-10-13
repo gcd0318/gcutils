@@ -190,6 +190,8 @@ def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
     from hashlib import sha512 as encrypt_func
     if('md5' == encrypt):
         from hashlib import md5 as encrypt_func
+    if('sha256' == encrypt):
+        from hashlib import sha256 as encrypt_func
     absfp = os.path.abspath(filepath)
     if os.path.isfile(absfp):
         m = encrypt_func()
