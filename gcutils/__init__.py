@@ -1,8 +1,11 @@
+import base64
 import configparser
 import datetime
 import glob
+import json
 import os
 import paramiko
+import requests
 import shutil
 import socket
 import stat
@@ -11,6 +14,8 @@ import subprocess
 import time
 import traceback
 import random
+
+
 
 UTF8 = 'utf-8'
 
@@ -613,6 +618,17 @@ def idle(msg, mark, case_match=False):
 
 def randstr(length=4):
     return ''.join(random.sample(string.ascii_letters + string.digits, length))
+
+
+def weekday(t=None):
+    if t is None:
+        t = datetime.date.today()
+    d = datetime.date.weekday(t)
+    if 6 == d:
+        res = '日'
+    else:
+        res = str(d + 1)
+    return res
 
 
 if ('__main__' == __name__):
