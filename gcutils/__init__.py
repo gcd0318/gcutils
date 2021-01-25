@@ -602,7 +602,7 @@ def latest(path):
                     latest_filename = filename
     return latest_filename, latest_mtime
 
-def idle(msg, mark, case_match=False):
+def idle(msg, mark='y', case_match=False):
     c = ''
     if not case_match:
         mark = mark.lower()
