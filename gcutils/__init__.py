@@ -608,6 +608,7 @@ def latest(path):
     return latest_filename, latest_mtime
 
 def idle(msg, mark='y', case_match=False):
+    msg = msg.strip() + ' '
     c = ''
     if not case_match:
         mark = mark.lower()
