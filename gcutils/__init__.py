@@ -363,7 +363,7 @@ def local_cp(src, tgt):
         tgt = shutil.copy2(src, tgt)
     return tgt
 
-def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=None, platform='linux'):
+def remote_exec(cmd, ip, username, passkey=None, pkey=None, port=22, no_err=True, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=None, platform='linux'):
     resd = {'res': [], 'err': []}
     rt = 0
     if ('' != cmd):
@@ -371,10 +371,17 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
             while (('err' in resd.keys()) and (rt <= retry)):
                 resd.pop('err')
                 ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 try:
                     ssh.load_system_host_keys()
                     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                    ssh.connect(hostname=ip, port=port, username=username, password=password)
+                    try:
+                        ssh.connect(hostname=ip, port=port, username=username, password=passkey)
+                    except:
+                        pkey=paramiko.RSAKey.from_private_key_file(passkey)
+                        ssh.connect(ip, username=username, pkey=pkey)
+                    finally:
+                        pass
                     if (cmd.split(';')[-1].replace('&', '').split('-')[0].strip() in (
                     'reboot', 'shutdown', 'poweroff')):
                         ssh.exec_command(cmd, timeout=timeout)
@@ -399,7 +406,7 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
             while (('err' in resd.keys()) and (rt <= retry)):
                 resd.pop('err')
                 try:
-                    ret = winrm.Session('http://' + ip + ':' + str(port) + '/wsman', auth=(username, password)).run_cmd(cmd)
+                    ret = winrm.Session('http://' + ip + ':' + str(port) + '/wsman', auth=(username, passkey)).run_cmd(cmd)
                     resd['res'], resd['err'] = ret.std_out, ret.std_err
                 except Exception as err:
                     resd['err'] = [str(err), traceback.format_exc()]
@@ -411,13 +418,15 @@ def remote_exec(cmd, ip, username, password, port=22, no_err=True, timeout=TIMEO
     return resd
 
 
-def exec_cmd(cmd, machine='localhost', username=None, password=None, port=22, no_err=True, omit_str=None, platform='linux', timeout=TIMEOUT_s, debug=False):
+def exec_cmd(cmd, machine='localhost', username=None, passkey=None, port=22, no_err=True, omit_str=None, platform='linux', timeout=TIMEOUT_s, debug=False):
     rtcode = -1
     resl = []
     if (machine in LOCALS):
         rtcode, resl = exec_local_cmd(cmd)
     else:
-        resd = remote_exec(cmd, machine, username, password, port, no_err=no_err, timeout=timeout, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
+        if passkey is None:
+            passkey = '/home/' + username + '/.ssh/id_rsa'
+        resd = remote_exec(cmd, machine, username, passkey, port, no_err=no_err, timeout=timeout, short_wait=SHORT_s, retry=RETRY, omit_str=omit_str, platform=platform)
         resl = resd['res']
         if (resd.get('err')) and no_err and ((omit_str is None) or (not (omit_str in resd['res'][0]))):
             resl = resd['err']
@@ -633,7 +642,8 @@ def weekday(t=None):
 
 
 if ('__main__' == __name__):
-    print(randstr())
-    print(randstr(8))
+    print(exec_cmd(machine='192.168.201.38', username='curacloud', cmd='ls'))
+#    print(randstr())
+#    print(randstr(8))
 #    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
 #    print(output)
