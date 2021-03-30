@@ -26,17 +26,19 @@ SCRIPT_EXECUTE_TIMEOUT_s = 60
 RETRY = 10
 LOCALS = ('localhost', '127.0.0.1')
 
-def read_config(paramfile):
+def read_config(paramfile, default=True):
     resd = {}
     if os.path.isfile(paramfile):
         config = configparser.ConfigParser()
         config.read(paramfile)
         for sect in config:
-            params = {}
-            section = config[sect]
-            for key in section:
-                params[key] = section[key]
-            resd[sect] = params
+            if not (default and ('DEFAULT' == sect)):
+                params = {}
+                section = config[sect]
+                for key in section:
+                    params[key] = section[key]
+                if(0 < len(params)):
+                    resd[sect] = params
     return resd
 
 def is_dir(path, sock=None, sftp=None):
