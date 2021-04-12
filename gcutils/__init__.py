@@ -642,9 +642,32 @@ def weekday(t=None):
         res = str(d + 1)
     return res
 
+def comp_list(l1, l2, order=False):
+    res = (len(l1) == len(l2))
+    i = 0
+    if order:
+        while res and (i < len(l1)):
+            res = (l1[i] == l2[i])
+            i = i + 1
+    else:
+        while res and (i < len(l1)):
+            res = (l1[i] in l2)
+            i = i + 1
+    return res
 
 if ('__main__' == __name__):
-    print(exec_cmd(machine='192.168.201.38', username='curacloud', cmd='ls'))
+    l1 = [1, 2, 3, 4, 5]
+    l2 = [1, 2, 3, 4, 5]
+    l3 = [5, 4, 3, 2, 1]
+    l4 = [1, 2, 3, 4]
+    print(comp_list(l1, l2, order=True))
+    print(comp_list(l1, l3, order=True))
+    print(comp_list(l1, l4, order=True))
+    print(comp_list(l1, l2, order=False))
+    print(comp_list(l1, l3, order=False))
+    print(comp_list(l1, l4, order=False))
+
+#    print(exec_cmd(machine='192.168.201.38', username='curacloud', cmd='ls'))
 #    print(randstr())
 #    print(randstr(8))
 #    output = remote_exec('ls', '192.168.201.34', 'curacloud', 'curacloud')
