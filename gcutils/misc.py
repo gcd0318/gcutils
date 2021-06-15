@@ -1,3 +1,4 @@
+import configparser
 import datetime
 import os
 import random
@@ -83,3 +84,80 @@ def read_config(paramfile, include_default=True, allow_empty=True):
                 if (allow_empty or (0 < len(params))):
                     resd[sect] = params
     return resd
+
+
+class NonBlockingStreamReader:
+    def __init__(self, stream):
+        '''
+        stream: the stream to read from.
+                Usually a process' stdout or stderr.
+        '''
+
+        self._s = stream
+        self._q = Queue()
+
+        def _populateQueue(stream, queue):
+            '''
+            Collect lines from 'stream' and put them in 'quque'.
+            '''
+
+            while True:
+                line = stream.readline()
+                if line:
+                    queue.put(line)
+                else:
+                    break
+                    # raise UnexpectedEndOfStream
+
+        self._t = threading.Thread(target=_populateQueue,
+                                   args=(self._s, self._q))
+        self._t.daemon = True
+        self._t.start()  # start collecting lines from the stream
+
+    def readline(self, timeout=None):
+        try:
+            return self._q.get(block=timeout is not None,
+                               timeout=timeout)
+        except Exception as err:
+            return None
+
+
+def execute(command, *args, **kwargs):
+    """
+    Execute an command then return its return code.
+    :type command: str or unicode
+    :param timeout: timeout of this command
+    :type timeout: int
+    :rtype: (int, str, str)
+    """
+
+    timeout = kwargs.pop("timeout", None)
+    command_list = [command, ]
+    command_list.extend(args)
+
+    ref = {
+        "process": None,
+        "stdout": None,
+        "stderr": None,
+    }
+
+    def target():
+        ref['process'] = subprocess.Popen(
+            " ".join(command_list),
+            shell=True,
+            close_fds=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        ref['stdout'], ref['stderr'] = ref['process'].communicate()
+
+    thread = Thread(target=target)
+    thread.start()
+    thread.join(timeout=timeout)
+    if thread.is_alive():
+        if ref['process'] is not None:
+            ref['process'].terminate()
+            ref['process'].wait()
+        thread.join()
+
+    return ref['process'].returncode, ref['stdout'], ref['stderr']
