@@ -5,3 +5,4 @@ SHORT_s = 10
 SCRIPT_EXECUTE_TIMEOUT_s = 60
 
 RETRY = 10
+LOCALS = ('localhost', '127.0.0.1')
