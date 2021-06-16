@@ -20,3 +20,5 @@ print(is_same('.', '..'))
 print(rooty('.', '..'))
 print(pathize('..'))
 print(is_dir('.'))
+
+from netops import *

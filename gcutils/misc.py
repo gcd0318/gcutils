@@ -5,6 +5,7 @@ import random
 import string
 import time
 
+
 def idle(msg, mark='y', case_match=False):
     msg = msg.strip() + ' '
     c = ''
@@ -14,6 +15,7 @@ def idle(msg, mark='y', case_match=False):
         c = input(msg)
         if not case_match:
             c = c.lower()
+
 
 def randstr(length=4):
     return ''.join(random.sample(string.ascii_letters + string.digits, length))
@@ -28,6 +30,7 @@ def weekday(t=None):
     else:
         res = str(d + 1)
     return res
+
 
 def comp_list(l1, l2, order=False):
     res = (len(l1) == len(l2))
@@ -53,9 +56,11 @@ def value2dict(value):
             res.append('"' + k.strip() + '": "' + v.strip() + '"')
     return eval('{' + ', '.join(res) + '}')
 
+
 def value2list(value):
     value = value.strip()
     return [p.strip() for p in value[1:-1].split(',')]
+
 
 def timestamp(t=None, fmt='%Y%m%d_%H%M%S.%f'):
     res = None
@@ -161,3 +166,5 @@ def execute(command, *args, **kwargs):
         thread.join()
 
     return ref['process'].returncode, ref['stdout'], ref['stderr']
+
+
