@@ -84,7 +84,6 @@ def exec_cmd(cmd, machine='localhost', username=None, passkey=None, port=22, no_
     return rtcode, resl
 
 
-
 def get_local_ip(port=80):
     ip = None
     i = 0
@@ -100,5 +99,105 @@ def get_local_ip(port=80):
             s.close()
     return ip
 
+
 def get_local_hostname():
     return socket.gethostname() or None
+
+
+def remote_cp(src, tgt):
+    # username:password@ip:port@path
+    (local, remote) = (src, tgt) if ('@' in tgt) else (tgt, src)
+    auth, sock, remote_path = remote.split('@')
+    username, password = auth.split(':')
+    if not(':' in sock):
+        sock = sock + ':22'
+    t = paramiko.Transport(sock)
+    t.connect(username=username, password=password)
+    sftp = paramiko.SFTPClient.from_transport(t)
+    res = None
+    try:
+        src_root = ''
+        tgt_root = ''
+        local = os.path.abspath(local)
+        if (local == src):
+            tgt_path = remote_path
+            if os.path.isdir(src):
+                src_files = deep_scan(src)
+                if src.endswith(os.sep):
+                    src_root = src.split(os.sep)[-2]
+                else:
+                    src_root = src.split(os.sep)[-1]
+                while tgt_path.endswith(os.sep):
+                    tgt_path = tgt_path[:-1]
+                tgt_path = os.sep.join([tgt_path, src_root, ''])
+            else:
+                src_files = [src]
+                if is_dir(sftp=sftp, path=tgt_path):
+                    pass
+            for fullpath in src_files:
+                rel_path = ''
+                if is_dir(src):
+                    fplist = fullpath.replace(src, '').split(os.sep)
+                    rel_path = os.sep.join(fplist[:-1])
+                    filename = fplist[-1]
+                else:
+                    filename = fullpath.split(os.sep)[-1]
+                while rel_path.startswith(os.sep):
+                    rel_path = rel_path[1:]
+                if (not tgt_path.endswith(os.sep)):
+                    tgt_path = tgt_path + os.sep
+                remotepath = tgt_path + rel_path
+                if not(remotepath.endswith(os.sep)):
+                    remotepath = remotepath + os.sep
+                if not(is_dir(sftp=sftp, path=remotepath)):
+                    sftp.mkdir(remotepath)
+                if not(is_dir(path=fullpath)):
+                    sftp.put(fullpath, remotepath + filename)
+        elif(remote == src):
+            src_root = ''
+            src_path = remote_path
+            if is_dir(sftp=sftp, path=src_path):
+                src_files = deep_scan_remote(sftp, src_path)
+                if src_path.endswith(os.sep):
+                    src_root = src_path.split(os.sep)[-2]
+                else:
+                    src_root = src_path.split(os.sep)[-1]
+            else:
+                src_files = [src_path]
+                src_path = os.sep.join(src_path.split(os.sep)[:-1])
+            for fullpath in src_files:
+                fplist = fullpath.replace(src_path, '').split(os.sep)
+                rel_path = os.sep.join(fplist[:-1])
+                filename = fplist[-1]
+                if rel_path.startswith(os.sep):
+                    rel_path = rel_path[1:]
+                if (not local.endswith(os.sep)):
+                    local = local + os.sep
+                localpath = local + src_root + os.sep + rel_path
+                if not(localpath.endswith(os.sep)):
+                    localpath = localpath + os.sep
+                if not(os.path.exists(localpath)):
+                    os.mkdir(localpath)
+                if not(is_dir(sftp=sftp, path=fullpath)):
+                    sftp.get(fullpath, localpath + filename)
+        res = tgt + os.sep + src_root
+    except Exception as err:
+        raise Exception(__name__, err)
+    finally:
+        t.close()
+    return res
+
+
+def remote_mkdir(sftp, path):
+    path_split = path.split(os.sep)
+    paths = []
+    i = 0
+    remote_path = os.sep.join(path_split[:len(path_split) - i])
+    while (i < len(path_split)) and (not(is_dir(sftp=sftp, path=remote_path))):
+#        print(remote_path, is_dir(sftp=sftp, path=remote_path))
+        paths.append(remote_path)
+        i = i + 1
+        remote_path = os.sep.join(path_split[:len(path_split) - i])
+    while (0 < len(paths)):
+        sftp.mkdir(paths.pop())
+

@@ -6,6 +6,21 @@ import string
 import time
 
 
+def get_func(f):
+    def _wrapper(*argc, **kwargs):
+        logger.info('running ' + f.__name__)
+        while True:
+            try:
+                f(*argc, **kwargs)
+            except Exception as err:
+                import traceback
+                logger.error(f.__name__)
+                logger.error(str(err))
+                logger.error(traceback.format_exc())
+            time.sleep(PERIOD_s)
+    return _wrapper
+
+
 def idle(msg, mark='y', case_match=False):
     msg = msg.strip() + ' '
     c = ''
