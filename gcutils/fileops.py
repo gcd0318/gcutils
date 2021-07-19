@@ -172,6 +172,11 @@ def is_dir(path, sock=None, sftp=None):
             raise Exception(__name__, err)
     return res
 
+def makedirs(path):
+    tgt_path = os.path.realpath.expanduser(path)
+    if not os.path.exists(tgt_path):
+        os.makedirs(path)
+
 def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
     res = None
     from hashlib import sha512 as encrypt_func
@@ -194,8 +199,7 @@ def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
         pathencrypt = encrypt_func()
         pathencrypt.update(absfp.encode(UTF8))
         tmp_path = os.path.abspath('/tmp')
-        if not os.path.exists(tmp_path):
-            os.makedirs(tmp_path)
+        makedirs(tmp_path)
         path_encrypt = tmp_path + os.sep + pathencrypt.hexdigest()
         with open(path_encrypt, 'w') as tmpf:
             encrypt_d = {}
