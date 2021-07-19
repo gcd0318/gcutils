@@ -173,7 +173,7 @@ def is_dir(path, sock=None, sftp=None):
     return res
 
 def makedirs(path):
-    tgt_path = os.path.realpath.expanduser(path)
+    tgt_path = os.path.realpath(os.path.expanduser(path))
     if not os.path.exists(tgt_path):
         os.makedirs(path)
 
