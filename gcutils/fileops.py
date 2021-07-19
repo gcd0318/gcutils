@@ -175,7 +175,7 @@ def is_dir(path, sock=None, sftp=None):
 def makedirs(path):
     tgt_path = os.path.realpath(os.path.expanduser(path))
     if not os.path.exists(tgt_path):
-        os.makedirs(path)
+        os.makedirs(tgt_path)
 
 def get_encrypt(filepath, encrypt='sha512', enblock_size=1024*1024):
     res = None
