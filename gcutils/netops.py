@@ -4,9 +4,9 @@ import subprocess
 import time
 import traceback
 
-from misc import exec_local_cmd
+from gcutils.cli import exec_local_cmd
 
-from const import TIMEOUT_s, SHORT_s, SCRIPT_EXECUTE_TIMEOUT_s, RETRY, LOCALS
+from gcutils.const import TIMEOUT_s, SHORT_s, SCRIPT_EXECUTE_TIMEOUT_s, RETRY, LOCALS
 
 
 def remote_exec(cmd, ip, username, passkey=None, pkey=None, port=22, no_err=True, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=None, platform='linux'):
