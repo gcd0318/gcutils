@@ -6,7 +6,7 @@ import traceback
 
 from gcutils.cli import exec_local_cmd
 
-from gcutils.const import TIMEOUT_s, SHORT_s, SCRIPT_EXECUTE_TIMEOUT_s, RETRY, LOCALS
+from gcutils.const import TIMEOUT_s, SHORT_s, SCRIPT_EXECUTE_TIMEOUT_s, RETRY, LOCALS, DNS
 
 
 def remote_exec(cmd, ip, username, passkey=None, pkey=None, port=22, no_err=True, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=None, platform='linux'):
@@ -201,3 +201,6 @@ def remote_mkdir(sftp, path):
     while (0 < len(paths)):
         sftp.mkdir(paths.pop())
 
+
+if ('__main__' == __name__):
+    print(get_local_ip())
