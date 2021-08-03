@@ -86,8 +86,13 @@ def exec_cmd(cmd, machine='localhost', username=None, passkey=None, port=22, no_
     return rtcode, resl
 
 def get_ip_by_if(ifname):
+    ip = None
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname.encode('ascii')[:15]))[20:24])
+    try:
+        ip = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname.encode('ascii')[:15]))[20:24])
+    except Exception as err:
+        pass
+    return ip
 
 def get_local_ip(port=80):
     ip = None
