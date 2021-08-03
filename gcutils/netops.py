@@ -1,5 +1,7 @@
+import fcntl
 import paramiko
 import socket
+import struct
 import subprocess
 import time
 import traceback
@@ -83,6 +85,9 @@ def exec_cmd(cmd, machine='localhost', username=None, passkey=None, port=22, no_
         print(resl)
     return rtcode, resl
 
+def get_ip_by_if(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname.encode('ascii')[:15]))[20:24])
 
 def get_local_ip(port=80):
     ip = None
