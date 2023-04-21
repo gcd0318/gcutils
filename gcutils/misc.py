@@ -3,6 +3,7 @@ import datetime
 import os
 import random
 import string
+import threading
 import time
 
 
@@ -171,7 +172,7 @@ def execute(command, *args, **kwargs):
         )
         ref['stdout'], ref['stderr'] = ref['process'].communicate()
 
-    thread = Thread(target=target)
+    thread = threading.Thread(target=target)
     thread.start()
     thread.join(timeout=timeout)
     if thread.is_alive():

@@ -1,4 +1,6 @@
-from gcutils.const import SCRIPT_EXECUTE_TIMEOUT_s, TIMEOUT_s, SHORT_s, RETRY
+from gcutils.const import SCRIPT_EXECUTE_TIMEOUT_s, TIMEOUT_s, SHORT_s, RETRY, LOCALS
+
+import subprocess
 
 def run_shell_cmd(cmd):
     try:
