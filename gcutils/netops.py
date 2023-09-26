@@ -1,4 +1,5 @@
 import fcntl
+import netifaces
 import paramiko
 import socket
 import struct
@@ -85,7 +86,14 @@ def exec_cmd(cmd, machine='localhost', username=None, passkey=None, port=22, no_
         print(resl)
     return rtcode, resl
 
-def get_ip_by_if(ifname):
+
+def get_ip_by_iface(ifname):
+    ips = []
+
+    for addr in netifaces.ifaddresses(ifname)[2]:
+        ips.append(addr['addr'])
+    return ips
+'''
     ip = None
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -93,25 +101,46 @@ def get_ip_by_if(ifname):
     except Exception as err:
         pass
     return ip
+'''
 
-def get_local_ip(port=80):
-    ip = None
+def get_local_hostname():
+    return socket.gethostname() or None
+
+
+def get_local_ifaces():
+    ifaces = {}
+    mappings = netifaces.gateways()
+    for t in mappings[2]:
+        gw, iface, default = t
+        if (4 == len(gw.split('.'))):
+            ifaces[iface] = default
+    return ifaces
+
+
+def get_local_ips(default_only=False):
+    ips = {}
+
+    ifaces = get_local_ifaces()
+    for ifname in ifaces:
+        ips[ifname] = {'default': ifaces[ifname], 'addr': get_ip_by_iface(ifname)}
+    return ips
+
+'''
     i = 0
-    while (ip is None) and (i < len(DNS)):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    while (i < len(dns)):
         try:
-            s.connect((DNS[i], port))
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect((dns[i], port))
             ip = s.getsockname()[0]
+            if not ip in ips:
+                ips.append(ip)
         except Exception as err:  
             raise Exception(__name__, err)
         finally:
             i = i + 1
             s.close()
-    return ip
-
-
-def get_local_hostname():
-    return socket.gethostname() or None
+    return ips
+'''
 
 
 def remote_cp(src, tgt):
@@ -213,4 +242,5 @@ def remote_mkdir(sftp, path):
 
 
 if ('__main__' == __name__):
-    print(get_local_ip())
+    print(get_local_ifaces())
+    print(get_local_ips())
