@@ -79,10 +79,12 @@ def local_cp(src, tgt):
 
 
 def get_disk_usage(path='/'):
-    st = os.statvfs(path)
-    free = (st.f_bavail * st.f_frsize)
-    total = (st.f_blocks * st.f_frsize)
-    used = (st.f_blocks - st.f_bfree) * st.f_frsize
+    total, used, free = None, None, None
+    if path is not None:
+        st = os.statvfs(path)
+        free = (st.f_bavail * st.f_frsize)
+        total = (st.f_blocks * st.f_frsize)
+        used = (st.f_blocks - st.f_bfree) * st.f_frsize
     return total, used, free
 
 def get_path_size(path):
