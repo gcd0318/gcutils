@@ -78,7 +78,7 @@ def local_cp(src, tgt):
     return tgt
 
 
-def get_disk_usage(path='/'):
+def get_disk_usage(path=None):
     total, used, free = None, None, None
     if path is not None:
         st = os.statvfs(path)
@@ -228,3 +228,9 @@ def deep_scan_remote(sftp, path):
     if ([] == res):
         res = [path]
     return res
+
+
+if ('__main__' == __name__):
+    print(get_disk_usage())
+    print(get_disk_usage('/home/gcd0318/ssd1t'))
+
