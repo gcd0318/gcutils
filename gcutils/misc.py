@@ -183,4 +183,26 @@ def execute(command, *args, **kwargs):
 
     return ref['process'].returncode, ref['stdout'], ref['stderr']
 
+MAX_BLOCK = 1024 * 1024
+
+def encrypt(data, encrypt='sha512', bsize=MAX_BLOCK):
+    res = None
+    from hashlib import sha512 as encrypt_func
+    if('md5' == encrypt):
+        from hashlib import md5 as encrypt_func
+    if('sha256' == encrypt):
+        from hashlib import sha256 as encrypt_func
+    m = encrypt_func()
+    i = 0
+    blk = data[i: i + bsize]
+    while blk:
+        b = blk.encode('ascii')
+        m.update(b)
+        i = i + bsize
+        blk = data[i: i + bsize]
+
+    res = m.hexdigest()
+
+    return res
+
 
