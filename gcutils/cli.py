@@ -20,8 +20,8 @@ def exec_local_cmd(args, shell=True, with_blank=False):
         rtcode = process.returncode
         output = stdout + stderr
         process.poll()
-        if (0 != rtcode):
-            output = stderr
+#        if (0 != rtcode):
+#            output = stderr
     except OSError as e:
         rtcode = e.errno
         output = "Fail to run command: %s" % e
