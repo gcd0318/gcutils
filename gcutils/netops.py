@@ -1,5 +1,6 @@
 import fcntl
 import netifaces
+import os
 import paramiko
 import socket
 import struct
@@ -11,6 +12,7 @@ from gcutils.cli import exec_local_cmd
 
 from gcutils.const import TIMEOUT_s, SHORT_s, SCRIPT_EXECUTE_TIMEOUT_s, RETRY, LOCALS, DNS
 
+from gcutils.fileops import deep_scan, is_dir
 
 def remote_exec(cmd, ip, username, passkey=None, pkey=None, port=22, no_err=True, timeout=TIMEOUT_s, short_wait=SHORT_s, retry=RETRY, omit_str=None, platform='linux'):
     resd = {'res': [], 'err': []}
@@ -49,7 +51,7 @@ def remote_exec(cmd, ip, username, passkey=None, pkey=None, port=22, no_err=True
                     raise Exception(__name__, err)
                 finally:
                     ssh.close()
-            if (not 'err' in resd):
+            if ('err' not in resd):
                 resd['err'] = []
         elif('windows' == platform):
             while (('err' in resd.keys()) and (rt <= retry)):
