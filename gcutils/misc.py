@@ -10,7 +10,7 @@ import time
 from queue import Queue
 
 from gcutils.const import PERIOD_s
-from gcutils.logger import logger
+from gcutils import logger
 
 
 def get_func(f):
